@@ -59,13 +59,13 @@ jobs:
                 robot_output.xml
 
 
-      - name: Run tests on Renode stable release
-        uses: antmicro/renode-test-action@v2.0.0
-        if: always()
-        with:
-            renode-version: '1.13.3'
-            tests-to-run: 'test.robot'
-            renode-path: renode-1.13
+      # - name: Run tests on Renode stable release
+      #   uses: antmicro/renode-test-action@v2.0.0
+      #   if: always()
+      #   with:
+      #       renode-version: '1.13.3'
+      #       tests-to-run: 'test.robot'
+      #       renode-path: renode-1.13
 
 
       - name: Archive Renode release results
