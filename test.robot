@@ -1,27 +1,41 @@
 *** Settings ***
-Suite Setup                   Setup
-Suite Teardown                Teardown
-Test Setup                    Reset Emulation
-Test Teardown                 Test Teardown
-Resource                      ${RENODEKEYWORDS}
+Library     Telnet
+
 
 *** Variables ***
-${SCRIPT}                     ${CURDIR}/test.resc
-${UART}                       sysbus.uart
+${REPL}             watchdog.repl
 
+# Registers
+${BASE_ADDRESS}     0x0
+${REFRESH}          ${BASE_ADDRESS}
+${CONTROL}          0x4
+${STATUS}           0x8
+${TIME}             0xC
+${MSVP}             0x10
+${TRIGGER}          0x14
+${FORCE}            0x18
 
-*** Keywords ***
-Load Script
-    Execute Script            ${SCRIPT}
-    Create Terminal Tester    ${UART}
+# Time
+${START_TIME}       0x989680
 
 
 *** Test Cases ***
-Should Run Test Case
-    Load Script
-    Start Emulation
-    Wait For Prompt On Uart     uart:~$
-    Write Line To Uart
-    Wait For Prompt On Uart     uart:~$
-    Write Line To Uart          demo ping
-    Wait For Line On Uart       pong
+Watchdog Test Functionality
+    Create Machine
+    Execute Command    sysbus WriteDoubleWord ${TRIGGER} 0x3e0
+    Execute Command    sysbus WriteDoubleWord ${TIME} ${START_TIME}
+    Execute Command    sysbus WriteDoubleWord ${MSVP} ${START_TIME}
+    Execute Command    sysbus WriteDoubleWord ${CONTROL} 0x0
+    Execute Command    sysbus WriteDoubleWord ${REFRESH} 0xDEADC0DE
+    ${CURR_TIME} =    Execute Command    sysbus ReadDoubleWord ${REFRESH}
+
+    Evaluate    int(${CURR_TIME}) < int(${START_TIME})
+
+
+*** Keywords ***
+Create Machine
+    Execute Command    using sysbus
+    Execute Command    mach create
+    Execute Command
+    ...    machine LoadPlatformDescriptionFromString "wdog0: Timers.MPFS_Watchdog_NEW @ sysbus 0x0 {frequency: 1000000}"
+
